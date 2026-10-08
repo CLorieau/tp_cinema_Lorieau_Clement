@@ -143,4 +143,19 @@ rollout restart → whoami = "production"
 **Q7.3** Le Pod supprimé est recréé immédiatement par le ReplicaSet (un nouveau Pod `0/1` puis `1/1` apparaît), l'application reste disponible grâce à l'autre réplica. Un `kind: Pod` nu aurait disparu définitivement : pas de recréation automatique, pas de réplicas, pas de rolling update ni de rollback.
 
 ## Bonus
-Non traité.
+### B1 — Durcissement de `movie`
+`securityContext` du conteneur (`20-movie.yaml`) : `runAsNonRoot: true`, `runAsUser: 10001`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `readOnlyRootFilesystem: true`. Comme Tomcat doit écrire dans `/tmp`, j'ai ajouté un volume `emptyDir` monté sur `/tmp`.
+```
+$ kubectl exec deploy/movie -- id
+uid=10001(spring) gid=101(spring) groups=101(spring)
+$ kubectl exec deploy/movie -- touch /test
+touch: cannot touch '/test': Read-only file system
+```
+Les Pods sont `1/1`.
+
+### B2 — Rolling update sans coupure
+Ajout de `strategy: RollingUpdate` avec `maxUnavailable: 0` et `maxSurge: 1`. Pendant un `kubectl rollout restart deploy/movie`, 300 requêtes sur `/api/movies` :
+```
+    300 200
+```
+**QB2** Aucune erreur. `maxUnavailable: 0` + `maxSurge: 1` : un nouveau Pod est créé avant qu'un ancien soit retiré, il n'y a donc jamais moins de 2 Pods prêts. La `readinessProbe` n'ajoute le nouveau Pod au Service qu'une fois l'appli démarrée, et ne laisse l'ancien partir qu'à ce moment-là. `shutdown: graceful` laisse l'ancien Pod terminer ses requêtes en cours avant de s'arrêter.
