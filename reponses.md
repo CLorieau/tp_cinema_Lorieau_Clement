@@ -1,3 +1,5 @@
+> 🚀 **Correction rapide :** lancer `./run-all.sh` (depuis Git Bash, Docker et Minikube démarrés) construit les images, déploie sur Minikube et exécute tous les tests et vérifications (tests Maven, Docker, Compose, Kubernetes, Ingress, scénarios de la Partie 6, bonus). Options : `SKIP_TESTS=1` pour sauter les tests Maven, `CLEANUP=1` pour supprimer le namespace à la fin.
+
 # Examen CinéK8s — LORIEAU Clément
 
 > Remarque : les ports réels du code diffèrent de l'énoncé : `movie-service` écoute sur **8085** et `ticket-service` sur **8086** (pas 8080). Dockerfile, Compose et `containerPort` utilisent ces ports ; les **Services** Kubernetes exposent 8080 (→ port nommé `http`), donc `MOVIE_URL=http://movie:8080` reste valable.
